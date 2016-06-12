@@ -26,7 +26,7 @@
      {
         "type": "shell",
         "script": "{{template_dir}}/build-ruby.sh",
-        "environment_vars": ["APP_NAME"="{{user `app_name`}}"]
+        "environment_vars": ["APP_NAME={{user `app_name`}}"]
       }
     ],
   "post-processors": [
