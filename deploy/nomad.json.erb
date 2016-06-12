@@ -1,0 +1,104 @@
+{
+    "Job": {
+        "Region": "<%=region %>",
+        "ID": "<%=app_name %>-job",
+        "Name": "<%=app_name %>-job",
+        "Type": "service",
+        "Priority": 50,
+        "AllAtOnce": false,
+        "Datacenters": [<% datacenters.split(',').each_with_index do |datacenter,index| %><% if index > 0 %>,<% end %>"<%=datacenter %>"<% end %>],
+        "Constraints": null,
+        "TaskGroups": [
+            {
+                "Name": "<%=app_name %>-group",
+                "Count": 2,
+                "Constraints": null,
+                "Tasks": [
+                    {
+                        "Name": "<%=app_name %>-task",
+                        "Driver": "docker",
+                        "User": "",
+                        "Config": {
+                            "args": ["-prefix", "<%=app_name %>", "-upcase", "-sanitize", "foreman", "start", "-d", "/srv/otto-app"
+                            ],
+                            "auth": [
+                                {
+                                    "email": "<%=docker_email %>",
+                                    "password": "<%=docker_password %>",
+                                    "username": "<%=docker_username %>"
+                                }
+                            ],
+                            "command": "envconsul",
+                            "image": "<%=docker_repository %>/<%=app_name %>:<%=git_short_commit %>",
+                            "network_mode": "host"
+                        },
+                        "Constraints": null,
+                        "Env": {
+                            "PORT": "${NOMAD_PORT_http}",
+                            "NODE": "${node.unique.name}",
+                            "GIT_SHORT_COMMIT": "<%=git_short_commit %>", 
+                            "BRANCH": "<%=branch %>"
+                        },
+                        "Services": [
+                            {
+                                "Id": "",
+                                "Name": "<%=app_name %>",
+                                "Tags": [
+                                    "traefik.enable=true",
+                                    "traefik.frontend.rule=Host:<%=app_name %>.<%=domain_name%>"
+                                ],
+                                "PortLabel": "http",
+                                "Checks": null
+                            }
+                        ],
+                        "Resources": {
+                            "CPU": 500,
+                            "MemoryMB": 128,
+                            "DiskMB": 300,
+                            "IOPS": 0,
+                            "Networks": [
+                                {
+                                    "Public": false,
+                                    "CIDR": "",
+                                    "ReservedPorts": null,
+                                    "DynamicPorts": [
+                                        {
+                                            "Label": "http",
+                                            "Value": 0
+                                        }
+                                    ],
+                                    "IP": "",
+                                    "MBits": 100
+                                }
+                            ]
+                        },
+                        "Meta": null,
+                        "KillTimeout": 5000000000,
+                        "LogConfig": {
+                            "MaxFiles": 10,
+                            "MaxFileSizeMB": 10
+                        },
+                        "Artifacts": null
+                    }
+                ],
+                "RestartPolicy": {
+                    "Interval": 60000000000,
+                    "Attempts": 2,
+                    "Delay": 15000000000,
+                    "Mode": "delay"
+                },
+                "Meta": null
+            }
+        ],
+        "Update": {
+            "Stagger": 0,
+            "MaxParallel": 0
+        },
+        "Periodic": null,
+        "Meta": null,
+        "Status": "",
+        "StatusDescription": "",
+        "CreateIndex": 0,
+        "ModifyIndex": 0
+    }
+}
