@@ -8,41 +8,41 @@
 # should be taken if these are modified.
 
 output "region" {
-    value = "${terraform_remote_state.shared.region}"
+    value = "${terraform_remote_state.shared.output.region}"
 }
 
 output "datacenters" {
-    value = "${terraform_remote_state.shared.datacenters}"
+    value = "${terraform_remote_state.shared.output.datacenters}"
 }
 
 output "vpc_id" {
-    value = "${terraform_remote_state.shared.vpc_id}"
+    value = "${terraform_remote_state.shared.output.vpc_id}"
 }
 
 output "vpc_cidr" {
-    value = "${terraform_remote_state.shared.vpc_cidr}"
+    value = "${terraform_remote_state.shared.output.vpc_cidr}"
 }
 
 output "subnet_public" {
-    value = "${terraform_remote_state.shared.subnet_public}"
+    value = "${terraform_remote_state.shared.output.subnet_public}"
 }
 
 output "key_name" {
-    value = "${terraform_remote_state.shared.key_name}"
+    value = "${terraform_remote_state.shared.output.key_name}"
 }
 
 output "infra_id" {
-    value = "${terraform_remote_state.shared.infra_id}"
+    value = "${terraform_remote_state.shared.output.infra_id}"
 }
 
 output "bastion_host" {
-    value = "${terraform_remote_state.shared.bastion_host}"
+    value = "${terraform_remote_state.shared.output.bastion_host}"
 }
 
 output "bastion_user" {
-    value = "${terraform_remote_state.shared.bastion_user}"
+    value = "${terraform_remote_state.shared.output.bastion_user}"
 }
 
 output "nomad_host" {
-    value = "${terraform_remote_state.shared.nomad_host}"
+    value = "${terraform_remote_state.shared.output.nomad_host}"
 }
