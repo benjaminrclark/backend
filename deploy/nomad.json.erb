@@ -1,51 +1,53 @@
 {
     "Job": {
-        "Region": "<%=region %>",
-        "ID": "<%=app_name %>-job",
-        "Name": "<%=app_name %>-job",
+        "Region": "",
+        "ID": "<%=ENV['APP_NAME'] %>-job",
+        "Name": "<%=ENV['APP_NAME'] %>-job",
         "Type": "service",
         "Priority": 50,
         "AllAtOnce": false,
-        "Datacenters": [<% datacenters.split(',').each_with_index do |datacenter,index| %><% if index > 0 %>,<% end %>"<%=datacenter %>"<% end %>],
+        "Datacenters": [<% ENV['DATACENTERS'].split(',').each_with_index do |datacenter,index| %><% if index > 0 %>,<% end %>"<%=datacenter %>"<% end %>],
         "Constraints": null,
         "TaskGroups": [
             {
-                "Name": "<%=app_name %>-group",
+                "Name": "<%=ENV['APP_NAME'] %>-group",
                 "Count": 2,
                 "Constraints": null,
                 "Tasks": [
                     {
-                        "Name": "<%=app_name %>-task",
+                        "Name": "<%=ENV['APP_NAME'] %>-task",
                         "Driver": "docker",
                         "User": "",
                         "Config": {
-                            "args": ["-prefix", "<%=app_name %>", "-upcase", "-sanitize", "foreman", "start", "-d", "/srv/otto-app"
+                            "args": ["-prefix", "<%=ENV['APP_NAME'] %>/<%=ENV['ENVIRONMENT'] %>>", "-upcase", "-sanitize", "foreman", "start", "-d", "/srv/otto-app"
                             ],
+                            <%if ENV['DOCKER_LOGIN'] == 'true' %>
                             "auth": [
                                 {
-                                    "email": "<%=docker_email %>",
-                                    "password": "<%=docker_password %>",
-                                    "username": "<%=docker_username %>"
+                                    "email": "<%=ENV['DOCKER_EMAIL'] %>",
+                                    "password": "<%=ENV['DOCKER_PASSWORD'] %>",
+                                    "username": "<%=ENV['DOCKER_USERNAME'] %>"
                                 }
                             ],
+                            <%end%>
                             "command": "envconsul",
-                            "image": "<%=docker_repository %>/<%=app_name %>:<%=git_short_commit %>",
+                            "image": "<%=ENV['DOCKER_REPOSITORY'] %>/<%=ENV['APP_NAME'] %>:<%=ENV['GIT_SHORT_COMMIT'] %>",
                             "network_mode": "host"
                         },
                         "Constraints": null,
                         "Env": {
                             "PORT": "${NOMAD_PORT_http}",
                             "NODE": "${node.unique.name}",
-                            "GIT_SHORT_COMMIT": "<%=git_short_commit %>", 
-                            "BRANCH": "<%=branch %>"
+                            "GIT_SHORT_COMMIT": "<%=ENV['GIT_SHORT_COMMIT'] %>", 
+                            "BRANCH": "<%=ENV['GIT_BRANCH'] %>"
                         },
                         "Services": [
                             {
                                 "Id": "",
-                                "Name": "<%=app_name %>",
+                                "Name": "<%=ENV['APP_NAME'] %>",
                                 "Tags": [
                                     "traefik.enable=true",
-                                    "traefik.frontend.rule=Host:<%=app_name %>.<%=domain_name%>"
+                                    "traefik.frontend.rule=Host:<%=ENV['APP_NAME'] %>.<%=ENV['DOMAIN_NAME']%>"
                                 ],
                                 "PortLabel": "http",
                                 "Checks": null

@@ -8,25 +8,41 @@
 # should be taken if these are modified.
 
 output "region" {
-    value = "${var.aws_region}"
+    value = "${terraform_remote_state.shared.region}"
+}
+
+output "datacenters" {
+    value = "${terraform_remote_state.shared.datacenters}"
 }
 
 output "vpc_id" {
-    value = "${aws_vpc.main.id}"
+    value = "${terraform_remote_state.shared.vpc_id}"
 }
 
 output "vpc_cidr" {
-    value = "${aws_vpc.main.cidr_block}"
+    value = "${terraform_remote_state.shared.vpc_cidr}"
 }
 
 output "subnet_public" {
-    value = "${aws_subnet.public.id}"
+    value = "${terraform_remote_state.shared.subnet_public}"
 }
 
 output "key_name" {
-    value = "${aws_key_pair.main.id}"
+    value = "${terraform_remote_state.shared.key_name}"
 }
 
 output "infra_id" {
-    value = "${element(split("-", aws_vpc.main.id), 1)}"
+    value = "${terraform_remote_state.shared.infra_id}"
+}
+
+output "bastion_host" {
+    value = "${terraform_remote_state.shared.bastion_host}"
+}
+
+output "bastion_user" {
+    value = "${terraform_remote_state.shared.bastion_user}"
+}
+
+output "nomad_host" {
+    value = "${terraform_remote_state.shared.nomad_host}"
 }

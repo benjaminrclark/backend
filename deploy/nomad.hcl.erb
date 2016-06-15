@@ -1,0 +1,44 @@
+job "<%=ENV['APP_NAME'] %>-job" {
+    region = "<%=ENV['REGION'] %>"
+    datacenters = [<% ENV['DATACENTERS'].split(',').each_with_index do |datacenter,index| %><% if index > 0 %>,<% end %>"<%=datacenter %>"<% end %>]
+    type = "service"
+    group "<%=ENV['APP_NAME'] %>-group" {
+        count = 2 
+        task "<%=ENV['APP_NAME'] %>-task" {
+            driver = "docker"
+            config {
+                image = "<%=ENV['DOCKER_REPOSITORY'] %>/<%=ENV['APP_NAME'] %>:<%=ENV['GIT_SHORT_COMMIT']%>"
+                command = "envconsul"
+                args = ["-prefix", "<%=ENV['APP_NAME'] %>","-upcase", "-sanitize","foreman","start", "-d", "/srv/otto-app"]
+                network_mode = "host"
+                <%if ENV['DOCKER_LOGIN'] == 'true' %>
+                auth {
+                     email = "<%=ENV['DOCKER_EMAIL'] %>"
+                     password = "<%=ENV['DOCKER_PASSWORD'] %>"
+                     username = "<%=ENV['DOCKER_USERNAME'] %>"
+                }
+                <%end%>
+            }
+            env {
+                PORT = "${NOMAD_PORT_http}"
+                NODE = "${node.unique.name}"
+                GIT_SHORT_COMMIT = "<%=ENV['GIT_SHORT_COMMIT'] %>" 
+                BRANCH =  "<%=ENV['GIT_BRANCH'] %>"
+            }
+            service {
+                name = "<%=ENV['APP_NAME'] %>"
+                tags = ["traefik.enable=true", "traefik.frontend.rule=Host:<%=ENV['APP_NAME'] %>.<%=ENV['DOMAIN_NAME']%>"]
+                port = "http"
+            }
+            resources {
+                cpu = 500
+                memory = 128
+                network {
+                    mbits = 100
+                    port "http" {
+                    }
+                }
+            }
+        }
+    }
+}
