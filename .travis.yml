@@ -1,2 +1,2 @@
 language: ruby
-install: gem install sinatra json --no-docs
+install: gem install sinatra json --no-document
