@@ -5,9 +5,7 @@ RUN gem install sinatra json --no-document
 ENV APP_PATH /var/opt/sinatra/src
 
 RUN mkdir -p $APP_PATH
-COPY app.rb $APP_PATH/app.rb
-COPY backend.conf /etc/backend.conf 
-
-EXPOSE 4567
+COPY backend.rb $APP_PATH/app.rb
+COPY app.conf /etc/app.conf 
 
 CMD ruby $APP_PATH/app.rb -o 0.0.0.0

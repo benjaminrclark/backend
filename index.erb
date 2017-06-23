@@ -1,0 +1,28 @@
+<html>
+  <body>
+  <h1>Frontend</h1>
+  <h2>Frontend Vars</h2>
+  <table>
+   <thead>
+     <tr><th>Key</th><th>value</th><tr>
+   </thead>
+   <tbody>
+     <%frontend.each do |key,value|%>
+         <tr><td><%=key %></td><td><%=value%></td><tr>
+     <%end%>
+   </tbody>
+ </table>
+
+  <h2>Backend Vars</h2>
+  <table>
+   <thead>
+     <tr><th>Key</th><th>value</th><tr>
+   </thead>
+   <tbody>
+     <%backend.each do |key,value|%>
+         <tr><td><%=key %></td><td><%=value%></td><tr>
+     <%end%>
+   </tbody>
+ </table>
+ </body>
+</html>
