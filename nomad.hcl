@@ -5,9 +5,20 @@ job "backend" {
       driver = "docker"
       config {
         image = "benjaminrclark/backend"
+        volumes = ["local/backend.conf:/etc/backend.conf"]
         port_map {
 	  http = 4567
         }
+      }
+      vault {
+        policies      = ["nomad-services"]
+        change_mode   = "restart"
+      }
+      template {
+        data        = <<EOH
+{ "hello": "{{ with secret "secret/nomad/services/backend" }}{{ .Data.value }}{{ end }}" }
+EOH
+        destination = "local/backend.conf"
       }
       service {
         name = "backend"
