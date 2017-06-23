@@ -1,7 +1,6 @@
 FROM alpine
 RUN apk add --no-cache ruby make gcc g++ ruby-dev
-RUN gem install sinatra --no-document
-RUN gem install json --no-document
+RUN gem install sinatra json --no-document
 
 ENV APP_PATH /var/opt/sinatra/src
 
