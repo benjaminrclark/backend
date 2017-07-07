@@ -5,7 +5,7 @@ RUN gem install sinatra json typhoeus diplomat --no-document
 ENV APP_PATH /var/opt/sinatra/src
 
 RUN mkdir -p $APP_PATH
-COPY frontend.rb $APP_PATH/app.rb
+COPY app.rb $APP_PATH/app.rb
 COPY app.conf /etc/app.conf 
 RUN mkdir $APP_PATH/views
 COPY index.erb $APP_PATH/views/index.erb
