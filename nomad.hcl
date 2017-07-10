@@ -18,7 +18,10 @@ job "test" {
       template {
         data        = <<EOH
 { 
-  "hello": "{{ with secret "secret/nomad/services/backend" }}{{ .Data.value }}{{ end }}"
+{{ with secret "secret/nomad/services/backend" }}
+  "hello": "{{ .Data.value }}"
+  "status": {{ .Data.status }}
+{{ end }}
 }
 EOH
         destination = "local/app.conf"
@@ -27,8 +30,8 @@ EOH
         name = "backend"
         port = "http"
         check {
-	  name = "alive"
-	  type = "tcp"
+	  type = "http"
+          path = "/"
 	  interval = "10s"
 	  timeout = "2s"
         }
