@@ -1,0 +1,459 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Running Applications on Nomad</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section data-markdown>
+					<script type="text/template">
+## Running Applications on Nomad
+ 
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Quickly
+ * Why Bother?
+ * Moving Parts
+   * Nomad
+   * Consul
+   * Vault
+ * Hands on Exercise: Run your first Nomad Job
+                                        </script>
+                                </section>
+
+				<section data-markdown>
+					<script type="text/template">
+### Why Bother?
+  * Promises a simpler way to run applications
+  * Decouples infrastructure (slow) from application (fast)
+  * More efficient, pack your applications onto machines
+ 
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### The moving parts
+![components](./HashiCorpSuite_OpenSource_StackGraphic.png)
+ 
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### The moving parts 1: Nomad
+  * Is a cluster scheduler
+    * Job Specification declares what to run
+    * Scheduler determines where and how the job is run
+  * Highly available, multi-dc / region
+  * Operationally simple 
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### The moving parts 2: Consul
+  * Is a key-value store and service discovery tool
+    * clients register services in consul
+    * clients use consul to discover the location of services
+  * Health Checks
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### The moving parts 3: Vault
+  * Is a tool for storing secrets in a __very__ secure way
+  * clients lease secrets from vault & renew them when they expire
+  * Authentication backends: username & password / AWS / Github / TLS ...
+  * Secret backends: AWS, SSH, PKI, Database, Generic
+                                        </script>
+                                </section>
+
+				<section data-markdown>
+					<script type="text/template">
+### Exercise
+
+  * What you're going to learn
+  * Prerequisites
+  * Install Nomad & Vault clients
+  * Clone repo
+  * Run job
+  * Profit!
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### What you're going to learn
+
+  * Run a job with Nomad
+  * Register and find services with Consul
+  * Provide configuration using Vault
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Prerequisites
+
+  * Machine on the public cloud network
+  * wget, unzip and git installed
+  * Github Token with read:org ([https://github.com/settings/tokens](https://github.com/settings/tokens))
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Installing Nomad & Vault Clients
+```
+ $ wget https://releases.hashicorp.com/nomad/0.5.6/nomad_0.5.6_linux_amd64.zip -O nomad.zip
+ $ unzip nomad.zip
+ $ export NOMAD_ADDR=http://10.11.0.1:4646
+ $ wget https://releases.hashicorp.com/vault/0.7.3/vault_0.7.3_linux_amd64.zip -O vault.zip
+ $ unzip vault.zip
+ $ export VAULT_ADDR=http://10.11.0.1:8200
+```
+					</script>
+                                </section>
+
+				<section data-markdown>
+					<script type="text/template">
+### Status Check: Nomad
+```
+  $ ./nomad status
+ID                                    Type     Priority  Status
+006833b1-60de-4c88-9253-0c515e39c66a  batch    1         dead
+0433648b-4fd7-435d-ba33-38ce224564fd  batch    1         running
+187b61dd-fe8e-42aa-9909-b762236770a3  batch    1         dead
+b4a7bcf4-771d-45de-bdfe-85a9ca5205db  batch    1         running
+comma                                 service  50        running
+elasticsearch                         service  50        running
+logging                               service  50        running
+rabbitmq                              service  100       running
+traefik                               service  100       running
+
+```
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Status Check: Consul
+[https://comma-consul.virt.ch.bbc.co.uk](https://comma-consul.virt.ch.bbc.co.uk)
+![consul](./consul.png)
+ 
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Status Check: Vault
+```
+ $ ./vault status
+Sealed: false
+Key Shares: 1
+Key Threshold: 1
+Unseal Progress: 0
+Unseal Nonce:
+Version: 0.7.2
+Cluster Name: vault-cluster-e465f8de
+Cluster ID: 1fcc20fd-9919-2bc6-9a02-2aaf055efc00
+
+High-Availability Enabled: true
+        Mode: active
+        Leader: http://10.11.0.1:8200
+```
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Clone the repo
+```
+$ git clone https://github.com/benjaminrclark/backend.git
+$ cd backend
+```
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### 1: Run a Job using Nomad
+ * Write a Job Specification
+ * Ask nomad to run it  
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Job Specification
+```
+job "test" {
+  datacenters = ["dc1"]
+  group "backend-group" {
+    task "backend-task" {
+      ...
+    }
+  }
+  group "frontend-group" {
+    task "frontend-task" {
+      ...
+    }
+  }
+}
+```
+_nb: change your job name_ 
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Job Specification: Backend Task
+```
+    task "backend-task" {
+      driver = "docker"
+      env {
+        PORT = "${NOMAD_PORT_http}"
+      }
+      config {
+        image = "benjaminrclark/backend"
+        network_mode = "host"
+        volumes = ["local/app.conf:/etc/app.conf"]
+      }
+      ...
+    }
+```
+ 
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Job Specification: Backend Task
+```
+    task "backend-task" {
+      ...
+      resources {
+        cpu = 500 # 500 Mhz
+        memory = 256 # 256MB
+        network {
+          mbits = 10
+          port "http" {}
+        }
+      }
+    }
+```
+ 
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Run the job
+```
+$ ./nomad run 
+./nomad run nomad.hcl
+==> Monitoring evaluation "e34bf017"
+    Evaluation triggered by job "test"
+    Allocation "3c049d9f" created: node "917e799a", group "backend-group"
+    Allocation "b590c6a2" created: node "f07c282b", group "frontend-group"
+    Evaluation status changed: "pending" -> "complete"
+==> Evaluation "e34bf017" finished with status "complete"
+```
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Monitor the job
+```
+$ ./nomad status test
+ID            = test
+Name          = test
+Type          = service
+Priority      = 50
+Datacenters   = dc1
+Status        = running
+Periodic      = false
+Parameterized = false
+
+Summary
+Task Group      Queued  Starting  Running  Failed  Complete  Lost
+backend-group   0       1         0        0       0         0
+frontend-group  0       1         0        0       0         0
+
+Allocations
+ID        Eval ID   Node ID   Task Group      Desired  Status   Created At
+3c049d9f  e34bf017  917e799a  backend-group   run      pending  07/07/17 16:53:41 BST
+b590c6a2  e34bf017  f07c282b  frontend-group  run      pending  07/07/17 16:53:41 BST
+```
+                                        </script>
+                                </section>
+
+				<section data-markdown>
+					<script type="text/template">
+### Get Logs from the job
+```
+$ ./nomad logs -stderr 261754d8
+[2017-07-07 19:58:18] INFO  WEBrick 1.3.1
+[2017-07-07 19:58:18] INFO  ruby 2.4.1 (2017-03-22) [x86_64-linux-musl]
+== Sinatra (v2.0.0) has taken the stage on 30345 for development with backup from WEBrick
+[2017-07-07 19:58:18] INFO  WEBrick::HTTPServer#start: pid=6 port=30345
+```
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### 2: Register and find services using Consul
+ * Declare services in your job spec
+ * Find services using:
+   * API
+   * DNS
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Job Specification: Registering a Service in Consul
+```
+    task "backend-task" {
+      ...
+      service {
+        name = "backend"
+        port = "http"
+        check {
+          name = "alive"
+          type = "tcp"
+          interval = "10s"
+          timeout = "2s"
+        }
+      }
+      ...
+    }
+```
+ 
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Finding and using services
+```
+require 'diplomat'
+
+backend = Diplomat::Service.get('backend', :first)
+puts "#{backend.Address} #{backend.Port}"
+```
+or just use [http://backend.service.consul](http://backend.service.consul)
+                                        </script>
+                                </section>
+
+				<section data-markdown>
+					<script type="text/template">
+### Service Discovery
+
+  ![backend](./backend.png)
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Service Discovery
+
+  ![frontend](./frontend.png)
+                                        </script>
+                                </section>
+
+				<section data-markdown>
+					<script type="text/template">
+### 3: Provide configuration using Vault
+ * Authenticate with Vault
+ * Write some data into it
+ * Read the secrets and provide them to the application
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Log into Vault
+
+```
+ $ export VAULT_AUTH_GITHUB_TOKEN=1234...
+ $ ./vault auth -method=github
+Successfully authenticated! You are now logged in.
+The token below is already saved in the session. You do not
+need to "vault auth" again with the token.
+token: 1234...
+token_duration: 2764799
+token_policies: [default nomad-users]
+```
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Write some secret data to vault
+```
+$ ./vault write secret/nomad/services/backend value=backendSecret
+Success! Data written to: secret/nomad/services/backend
+$ ./vault write secret/nomad/services/frontend value=frontendSecret
+Success! Data written to: secret/nomad/services/frontend
+
+```
+                                        </script>
+                                </section>
+				<section data-markdown>
+					<script type="text/template">
+### Job Specification: Reading secrets from Vault 
+```
+    task "backend-task" {
+      ...
+      vault {
+        policies = ["nomad-services"]
+        change_mode   = "restart"
+      }
+      template {
+        data        = <<EOH
+{ 
+  "hello": "{{ with secret "secret/nomad/services/backend" }}{{ .Data.value }}{{ end }}"
+}
+EOH
+        destination = "local/app.conf"
+      }
+      ...
+    }
+```
+ 
+                                        </script>
+                                </section>
+
+				<section data-markdown>
+					<script type="text/template">
+### Profit!
+
+  Visit [https://comma-test.virt.ch.bbc.co.uk/](https://comma-test.virt.ch.bbc.co.uk/)
+  ![app](./The_App.png)
+                                        </script>
+                                </section>
+
+			</div>
+		</div>
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
