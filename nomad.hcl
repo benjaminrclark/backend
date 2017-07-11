@@ -19,12 +19,13 @@ job "test" {
         data        = <<EOH
 { 
 {{ with secret "secret/nomad/services/backend" }}
-  "hello": "{{ .Data.value }}"
+  "hello": "{{ .Data.value }}",
   "status": {{ .Data.status }}
 {{ end }}
 }
 EOH
         destination = "local/app.conf"
+        change_mode   = "restart"
       }
       service {
         name = "backend"
@@ -68,6 +69,7 @@ EOH
 }
 EOH
         destination = "local/app.conf"
+        change_mode   = "restart"
       }
       service {
         name = "frontend"
