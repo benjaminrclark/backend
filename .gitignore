@@ -1,4 +1,1 @@
-dev/.vagrant
-.bundle
-.env
-.terraform
+.sshcontrol
