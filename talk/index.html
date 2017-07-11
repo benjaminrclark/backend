@@ -123,14 +123,25 @@
 ```
  $ wget https://releases.hashicorp.com/nomad/0.5.6/nomad_0.5.6_linux_amd64.zip -O nomad.zip
  $ unzip nomad.zip
- $ export NOMAD_ADDR=http://10.11.0.1:4646
  $ wget https://releases.hashicorp.com/vault/0.7.3/vault_0.7.3_linux_amd64.zip -O vault.zip
  $ unzip vault.zip
- $ export VAULT_ADDR=http://10.11.0.1:8200
 ```
 					</script>
                                 </section>
 
+				<section data-markdown>
+					<script type="text/template">
+### Connecting via the bastion 
+Add the ssh config to ~/.ssh/config, save the private key with the correct permissions
+```
+ $ eval $(ssh-agent -s)
+ $ ssh-add keyfile
+ $ export VAULT_ADDR=http://127.0.0.1:8200
+ $ ./connect.sh (to disconnect)
+ $ ./disconnect.sh (to disconnect) 
+```
+					</script>
+                                </section>
 				<section data-markdown>
 					<script type="text/template">
 ### Status Check: Nomad
@@ -327,8 +338,8 @@ $ ./nomad logs -stderr 261754d8
         name = "backend"
         port = "http"
         check {
-          name = "alive"
-          type = "tcp"
+          type = "http"
+          path = "/"
           interval = "10s"
           timeout = "2s"
         }
@@ -395,7 +406,7 @@ token_policies: [default nomad-users]
 					<script type="text/template">
 ### Write some secret data to vault
 ```
-$ ./vault write secret/nomad/services/backend value=backendSecret
+$ ./vault write secret/nomad/services/backend value=backendSecret status=200
 Success! Data written to: secret/nomad/services/backend
 $ ./vault write secret/nomad/services/frontend value=frontendSecret
 Success! Data written to: secret/nomad/services/frontend
@@ -416,7 +427,10 @@ Success! Data written to: secret/nomad/services/frontend
       template {
         data        = <<EOH
 { 
-  "hello": "{{ with secret "secret/nomad/services/backend" }}{{ .Data.value }}{{ end }}"
+  {{ with secret "secret/nomad/services/backend" }}
+  "hello": "{{ .Data.value }}"
+  "status": {{ .Data.status }}
+  {{ end }}
 }
 EOH
         destination = "local/app.conf"
