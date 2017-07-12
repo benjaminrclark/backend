@@ -18,7 +18,7 @@ job "test" {
       template {
         data        = <<EOH
 { 
-{{ with secret "secret/nomad/services/backend" }}
+{{ with secret "secret/nomad/services/test/backend" }}
   "hello": "{{ .Data.value }}",
   "status": {{ .Data.status }}
 {{ end }}
@@ -65,7 +65,9 @@ EOH
       template {
         data        = <<EOH
 {
-  "hello": "{{ with secret "secret/nomad/services/frontend" }}{{ .Data.value }}{{ end }}"
+{{ with secret "secret/nomad/services/frontend" }}
+  "hello": "{{ .Data.value }}"
+{{ end }}
 }
 EOH
         destination = "local/app.conf"

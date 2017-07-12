@@ -7,22 +7,36 @@ set :bind, '0.0.0.0'
 set :port, ENV.fetch('PORT','4567')
 set :logging, true
 
+  def check_service(service)
+    service.Checks.each do | check |
+      if check['Status'] != "passing"
+        return check['Status']
+      end
+    end
+    return "UP"
+  end
+
   def call_backend_service
-    backend = Diplomat::Service.get('backend', :all).sample
-    puts "#{backend.Address} #{backend.Port}"
-    if backend.Address.nil?
-      puts "Service is DOWN"
-      {:service => "DOWN"}
+    backend = Diplomat::Health.service('backend').sample
+    if backend.nil?
+      puts "Service is absent"
+      {:service => "ABSENT"}
     else
-      puts "Service is UP"
-      backend_response = Typhoeus.get("http://#{backend.Address}:#{backend.ServicePort}/")
-      puts backend_response
-      response = {:service => "UP", :response_status => backend_response.response_code} 
-      if backend_response.success? 
-        message = JSON.parse(backend_response.response_body)
-        response.merge(message)
+      health = check_service(backend)
+      puts "Service is #{health}"
+      if health == "UP"
+        backend_response = Typhoeus.get("http://#{backend.Service['Address']}:#{backend.Service['Port']}/")
+        puts backend_response
+        response = {:service => "UP", :response_status => backend_response.response_code} 
+        if backend_response.success? 
+          message = JSON.parse(backend_response.response_body)
+          response.merge(message)
+        else
+          response
+        end
       else
-        response
+        response = {:service => health} 
+	response
       end
     end
   end

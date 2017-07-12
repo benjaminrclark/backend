@@ -30,7 +30,7 @@
 	  <%if backend[:service] == 'UP'%>
             <span class="label label-success">Status UP</span>
           <%else%>
-            <span class="label label-Danger">Status DOWN</span>
+		  <span class="label label-danger">Status <%=backend[:service]%></span>
 	  <%end%>
         </h2>
           <table class="table">

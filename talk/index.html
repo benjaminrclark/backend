@@ -93,7 +93,6 @@
 
   * What you're going to learn
   * Prerequisites
-  * Install Nomad & Vault clients
   * Clone repo
   * Run job
   * Profit!
@@ -112,41 +111,15 @@
 					<script type="text/template">
 ### Prerequisites
 
-  * Machine on the public cloud network
-  * wget, unzip and git installed
+  * Log into machine on the public cloud network (chrisn to supply details)
   * Github Token with read:org ([https://github.com/settings/tokens](https://github.com/settings/tokens))
                                         </script>
                                 </section>
 				<section data-markdown>
 					<script type="text/template">
-### Installing Nomad & Vault Clients
-```
- $ wget https://releases.hashicorp.com/nomad/0.5.6/nomad_0.5.6_linux_amd64.zip -O nomad.zip
- $ unzip nomad.zip
- $ wget https://releases.hashicorp.com/vault/0.7.3/vault_0.7.3_linux_amd64.zip -O vault.zip
- $ unzip vault.zip
-```
-					</script>
-                                </section>
-
-				<section data-markdown>
-					<script type="text/template">
-### Connecting via the bastion 
-Add the ssh config to ~/.ssh/config, save the private key with the correct permissions
-```
- $ eval $(ssh-agent -s)
- $ ssh-add keyfile
- $ export VAULT_ADDR=http://127.0.0.1:8200
- $ ./connect.sh (to disconnect)
- $ ./disconnect.sh (to disconnect) 
-```
-					</script>
-                                </section>
-				<section data-markdown>
-					<script type="text/template">
 ### Status Check: Nomad
 ```
-  $ ./nomad status
+  $ nomad status
 ID                                    Type     Priority  Status
 006833b1-60de-4c88-9253-0c515e39c66a  batch    1         dead
 0433648b-4fd7-435d-ba33-38ce224564fd  batch    1         running
@@ -173,7 +146,7 @@ traefik                               service  100       running
 					<script type="text/template">
 ### Status Check: Vault
 ```
- $ ./vault status
+ $ vault status
 Sealed: false
 Key Shares: 1
 Key Threshold: 1
@@ -192,6 +165,7 @@ High-Availability Enabled: true
 				<section data-markdown>
 					<script type="text/template">
 ### Clone the repo
+Do this in your own working dir!
 ```
 $ git clone https://github.com/benjaminrclark/backend.git
 $ cd backend
@@ -208,6 +182,7 @@ $ cd backend
 				<section data-markdown>
 					<script type="text/template">
 ### Job Specification
+See ./nomad.hcl
 ```
 job "test" {
   datacenters = ["dc1"]
@@ -269,7 +244,7 @@ _nb: change your job name_
 					<script type="text/template">
 ### Run the job
 ```
-$ ./nomad run nomad.hcl
+$ nomad run nomad.hcl
 ==> Monitoring evaluation "e34bf017"
     Evaluation triggered by job "test"
     Allocation "3c049d9f" created: node "917e799a", group "backend-group"
@@ -283,7 +258,7 @@ $ ./nomad run nomad.hcl
 					<script type="text/template">
 ### Monitor the job
 ```
-$ ./nomad status test
+$ nomad status test
 ID            = test
 Name          = test
 Type          = service
@@ -310,7 +285,7 @@ b590c6a2  e34bf017  f07c282b  frontend-group  run      pending  07/07/17 16:53:4
 					<script type="text/template">
 ### Get Logs from the job
 ```
-$ ./nomad logs -stderr 261754d8
+$ nomad logs -stderr 261754d8
 [2017-07-07 19:58:18] INFO  WEBrick 1.3.1
 [2017-07-07 19:58:18] INFO  ruby 2.4.1 (2017-03-22) [x86_64-linux-musl]
 == Sinatra (v2.0.0) has taken the stage on 30345 for development with backup from WEBrick
@@ -352,10 +327,11 @@ $ ./nomad logs -stderr 261754d8
 				<section data-markdown>
 					<script type="text/template">
 ### Finding and using services
+Use an api client [https://www.consul.io/api/index.html](https://www.consul.io/api/index.html)
 ```
 require 'diplomat'
 
-backend = Diplomat::Service.get('backend', :first)
+backend = Diplomat::Service.get('backend', :all).sample
 puts "#{backend.Address} #{backend.Port}"
 ```
 or just use [http://backend.service.consul](http://backend.service.consul)
@@ -391,7 +367,7 @@ or just use [http://backend.service.consul](http://backend.service.consul)
 
 ```
  $ export VAULT_AUTH_GITHUB_TOKEN=1234...
- $ ./vault auth -method=github
+ $ vault auth -method=github
 Successfully authenticated! You are now logged in.
 The token below is already saved in the session. You do not
 need to "vault auth" again with the token.
@@ -405,10 +381,10 @@ token_policies: [default nomad-users]
 					<script type="text/template">
 ### Write some secret data to vault
 ```
-$ ./vault write secret/nomad/services/backend value=backendSecret status=200
-Success! Data written to: secret/nomad/services/backend
-$ ./vault write secret/nomad/services/frontend value=frontendSecret
-Success! Data written to: secret/nomad/services/frontend
+$ vault write secret/nomad/services/test/backend value=backendSecret status=200 ttl=60
+Success! Data written to: secret/nomad/services/test/backend
+$ vault write secret/nomad/services/test/frontend value=frontendSecret ttl=60
+Siiiiiiiiiata written to: secret/nomad/services/test/frontend
 
 ```
                                         </script>
@@ -426,13 +402,14 @@ Success! Data written to: secret/nomad/services/frontend
       template {
         data        = <<EOH
 { 
-  {{ with secret "secret/nomad/services/backend" }}
-  "hello": "{{ .Data.value }}"
+  {{ with secret "secret/nomad/services/test/backend" }}
+  "hello": "{{ .Data.value }}",
   "status": {{ .Data.status }}
   {{ end }}
 }
 EOH
         destination = "local/app.conf"
+        change_mode = "restart"
       }
       ...
     }
