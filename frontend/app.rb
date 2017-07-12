@@ -8,7 +8,7 @@ set :port, ENV.fetch('PORT','4567')
 set :logging, true
 
   def call_backend_service
-    backend = Diplomat::Service.get('backend', :first)
+    backend = Diplomat::Service.get('backend', :all).sample
     puts "#{backend.Address} #{backend.Port}"
     if backend.Address.nil?
       puts "Service is DOWN"

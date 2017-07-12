@@ -72,7 +72,7 @@ EOH
         change_mode   = "restart"
       }
       service {
-        name = "frontend"
+        name = "comma-test"
         port = "http"
         check {
 	  name = "alive"
