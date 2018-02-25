@@ -2,33 +2,34 @@ job "test" {
   datacenters = ["dc1"]
   group "backend-group" {
     task "backend-task" {
+      count = 1
       driver = "docker"
       env {
         PORT = "${NOMAD_PORT_http}"
       }
       config {
-        image = "benjaminrclark/backend"
-        network_mode = "host"
-        volumes = ["local/app.conf:/etc/app.conf"]
+        image = "benjaminrclark/backend:0.1"
+        volumes = ["secrets/app.conf:/etc/app.conf"]
       }
       vault {
         policies = ["nomad-services"]
-        change_mode   = "restart"
+        change_mode   = "signal"
+        change_signal = "SIGHUP"
       }
       template {
         data        = <<EOH
 { 
 {{ with secret "secret/nomad/services/test/backend" }}
-  "hello": "{{ .Data.value }}",
-  "status": {{ .Data.status }}
+  "data":"{{ .Data.value }}",
+  "status":{{ .Data.status }}
 {{ end }}
 }
 EOH
-        destination = "local/app.conf"
-        change_mode   = "restart"
+        destination = "secrets/app.conf"
+        change_mode   = "signal"
+        change_signal = "SIGHUP"
       }
       service {
-        name = "backend"
         port = "http"
         check {
 	  type = "http"
@@ -49,39 +50,47 @@ EOH
   }
   group "frontend-group" {
     task "frontend-task" {
+      count = 1
       driver = "docker"
       env {
         PORT = "${NOMAD_PORT_http}"
+        CONSUL_ADDR = "http://consul.service.consul:8500"
       }
       config {
-        image = "benjaminrclark/frontend"
-        network_mode = "host"
-        volumes = ["local/app.conf:/etc/app.conf"]
+        image = "benjaminrclark/frontend:0.1"
+        volumes = ["secrets/app.conf:/etc/app.conf"]
       }
       vault {
         policies = ["nomad-services"]
-        change_mode   = "restart"
+        change_mode   = "signal"
+        change_signal = "SIGHUP"
       }
       template {
         data        = <<EOH
 {
 {{ with secret "secret/nomad/services/frontend" }}
-  "hello": "{{ .Data.value }}"
+  "data":"{{ .Data.value }}",
+  "status":{{ .Data.status }}
 {{ end }}
 }
 EOH
-        destination = "local/app.conf"
-        change_mode   = "restart"
+        destination = "secrets/app.conf"
+        change_mode   = "signal"
+        change_signal = "SIGHUP"
       }
       service {
-        name = "comma-test"
+        tags = ["traefik.frontend.rule=Host:comma-test.virt.ch.bbc.co.uk"]
         port = "http"
         check {
-	  name = "alive"
-	  type = "tcp"
+	  type = "http"
+          path = "/"
 	  interval = "10s"
 	  timeout = "2s"
         }
+      }
+      update {
+        canary = 1
+        max_parallel = 1
       }
       resources {
         cpu = 500 # 500 Mhz

@@ -10,41 +10,96 @@
   </head>
   <body>
     <div class="container">
-    <h1>Test Application</h1>
-    <section>
-      <h2>Frontend</h2>
-        <table class="table">
-          <thead>
-            <tr><th>Key</th><th>value</th><tr>
-          </thead>
-          <tbody>
-            <%frontend.each do |key,value|%>
-              <tr><td><%=key %></td><td><%=value%></td><tr>
-            <%end%>
-          </tbody>
-        </table>
-      </section>
-      <section>
-	<h2>
-          Backend
-	  <%if backend[:service] == 'UP'%>
-            <span class="label label-success">Status UP</span>
-          <%else%>
-		  <span class="label label-danger">Status <%=backend[:service]%></span>
-	  <%end%>
-        </h2>
-          <table class="table">
-          <thead>
-            <tr><th>Key</th><th>value</th><tr>
-          </thead>
-          <tbody>
-            <%backend.each do |key,value|%>
-              <tr><td><%=key %></td><td><%=value%></td><tr>
-            <%end%>
-          </tbody>
-       </table>
-    </section>
+      <h1>Test Application</h1>
+      <p>Frontend version <span id="frontend-version"></span> is <span id="frontend-status" class="label label-warning">UNKNOWN</span> for <span id="frontend-since">0</span> seconds.</p>
+      <p><b id="frontend-data"></b></p>
+      <p>Backend is <span id="backend-status" class="label label-warning">UNKNOWN</span> for <span id="backend-since">0</span> seconds.</p>
+      <p><b id="backend-data"></b></p>
+    </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script>
+    var backend_status = "UNKNOWN";
+    var backend_class = "label label-warning"
+    var backend_since = 0;
+    var backend_data = "";
+    var frontend_status = "UNKNOWN";
+    var frontend_class = "label label-warning";
+    var frontend_since = 0;
+    var frontend_version = "unknown";
+    var frontend_data = "";
+    function poll() {
+     $.get('/api').done(
+       function(data){
+         if(frontend_status == "UP") {
+           frontend_since++;
+           frontend_data = data.frontend_data
+           frontend_version = data.frontend_version
+           if(data.backend_status != backend_status) {
+             backend_status = data.backend_status
+             backend_since = 0
+             if(backend_status == "UP") {
+               backend_class = "label label-success"
+               backend_data = data.backend_data
+             }
+             if(backend_status == "DOWN") {
+               backend_class = "label label-danger"
+               backend_data = "" 
+             }
+             if(backend_status == "UNKNOWN") {
+               backend_class = "label label-warning"
+               backend_data = "" 
+             }
+             if(backend_status == null) {
+               backend_class = "label label-warning"
+               backend_status = "UNKNOWN"
+               backend_data = ""
+             }
+           } else {
+             backend_since++;
+             if(backend_status == "UP") {
+               backend_data = data.backend_data
+             }
+           }
+         } else {
+           frontend_data = ""; 
+           backend_data = ""; 
+           frontend_since = 0;
+           frontend_status = "UP";
+           frontend_class = "label label-success"
+           backend_status = "UNKNOWN";
+           backend_since = 0;
+         }
+       }).fail(
+       function(error) {
+         if(frontend_status == "DOWN") {
+             frontend_since++;
+             backend_since++;
+         } else {
+             frontend_status = "DOWN";
+             frontend_data = ""
+             backend_data = ""
+             frontend_class = "label label-danger";
+             backend_status = "UNKNOWN";
+             backend_class = "label label-warning";
+             frontend_since = 0;
+             backend_since = 0;
+         }
+       }).always(
+       function() {
+	 $('#frontend-version').text(frontend_version); 
+	 $('#frontend-status').text(frontend_status); 
+	 $('#frontend-data').text(frontend_data); 
+         $('#frontend-status').attr('class', frontend_class); 
+	 $('#frontend-since').text(frontend_since); 
+	 $('#backend-status').text(backend_status); 
+         $('#backend-status').attr('class', backend_class); 
+	 $('#backend-since').text(backend_since); 
+	 $('#backend-data').text(backend_data); 
+         setTimeout(poll, 1000)
+       });
+     }
+     poll();
+    </script>
  </body>
 </html>

@@ -7,6 +7,20 @@ set :bind, '0.0.0.0'
 set :port, ENV.fetch('PORT','4567')
 set :logging, true
 
+Diplomat.configure do |config|
+  config.url = ENV.fetch("CONSUL_ADDR", "http://127.0.0.1:8500")
+end
+
+def load_config
+  JSON.parse(File.read(ENV.fetch("CONFIG","/etc/app.conf")))
+end
+
+config = load_config
+
+Signal.trap("HUP") {
+  config = load_config
+}
+
   def check_service(service)
     service.Checks.each do | check |
       if check['Status'] != "passing"
@@ -19,32 +33,35 @@ set :logging, true
   def call_backend_service
     backend = Diplomat::Health.service('backend').sample
     if backend.nil?
-      puts "Service is absent"
-      {:service => "ABSENT"}
+      return "UNKNOWN", ""
     else
       health = check_service(backend)
-      puts "Service is #{health}"
       if health == "UP"
+        puts "Backend UP #{backend.Service['Address']}:#{backend.Service['Port']}"
         backend_response = Typhoeus.get("http://#{backend.Service['Address']}:#{backend.Service['Port']}/")
-        puts backend_response
-        response = {:service => "UP", :response_status => backend_response.response_code} 
-        if backend_response.success? 
-          message = JSON.parse(backend_response.response_body)
-          response.merge(message)
+        if backend_response.success?
+          return "UP", backend_response.response_body
         else
-          response
+          return "DOWN", ""
         end
       else
-        response = {:service => health} 
-	response
+        return "DOWN", ""
       end
     end
   end
 
+  get '/api' do
+    content_type :json
+    status config["status"]
+    backend_status, backend_data = call_backend_service
+    {
+      :backend_status => backend_status,
+      :backend_data => backend_data,
+      :frontend_version => 1.0,
+      :frontend_data => config["data"],
+    }.to_json
+  end
+
   get '/' do
-    config = JSON.parse(File.read(ENV.fetch("CONFIG","/etc/app.conf")))
-    erb :index, :locals => {
-      :backend => call_backend_service,
-      :frontend => config,
-    }
+    erb :index
   end
