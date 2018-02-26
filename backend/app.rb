@@ -16,7 +16,7 @@ Signal.trap("HUP") {
 }
 
 get '/' do
-  status config.status
+  status config["status"]
   content_type 'text/plain'
-  config.data
+  config["data"]
 end
