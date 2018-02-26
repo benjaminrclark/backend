@@ -57,7 +57,7 @@ Signal.trap("HUP") {
     {
       :backend_status => backend_status,
       :backend_data => backend_data,
-      :frontend_version => 1.0,
+      :frontend_version => 2.0,
       :frontend_data => config["data"],
     }.to_json
   end
