@@ -2,34 +2,29 @@ job "test" {
   datacenters = ["dc1"]
   group "backend-group" {
     task "backend-task" {
-      count = 1
       driver = "docker"
       env {
         PORT = "${NOMAD_PORT_http}"
+        CONFIG = "/local/app.conf"
       }
       config {
-        image = "benjaminrclark/backend:0.1"
-        volumes = ["secrets/app.conf:/etc/app.conf"]
-      }
-      vault {
-        policies = ["nomad-services"]
-        change_mode   = "signal"
-        change_signal = "SIGHUP"
+        image = "benjaminrclark/backend:0.2"
+        command = "/usr/bin/ruby"
+        args = ["/var/opt/sinatra/src/app.rb", "-o", "0.0.0.0"]
       }
       template {
         data        = <<EOH
 { 
-{{ with secret "secret/nomad/services/test/backend" }}
-  "data":"{{ .Data.value }}",
-  "status":{{ .Data.status }}
-{{ end }}
+  "data":"{{ key "nomad/services/test/backend/data" }}",
+  "status":{{ key "nomad/services/test/backend/status" }}
 }
 EOH
-        destination = "secrets/app.conf"
+        destination = "local/app.conf"
         change_mode   = "signal"
         change_signal = "SIGHUP"
       }
       service {
+        name = "backend"
         port = "http"
         check {
 	  type = "http"
@@ -50,35 +45,30 @@ EOH
   }
   group "frontend-group" {
     task "frontend-task" {
-      count = 1
       driver = "docker"
       env {
         PORT = "${NOMAD_PORT_http}"
+        CONFIG = "/local/app.conf"
         CONSUL_ADDR = "http://consul.service.consul:8500"
       }
       config {
         image = "benjaminrclark/frontend:0.1"
-        volumes = ["secrets/app.conf:/etc/app.conf"]
-      }
-      vault {
-        policies = ["nomad-services"]
-        change_mode   = "signal"
-        change_signal = "SIGHUP"
+        command = "/usr/bin/ruby"
+        args = ["/var/opt/sinatra/src/app.rb", "-o", "0.0.0.0"]
       }
       template {
         data        = <<EOH
 {
-{{ with secret "secret/nomad/services/frontend" }}
-  "data":"{{ .Data.value }}",
-  "status":{{ .Data.status }}
-{{ end }}
+  "data":"{{ key "nomad/services/test/frontend/data" }}",
+  "status":{{ key "nomad/services/test/frontend/status" }}
 }
 EOH
-        destination = "secrets/app.conf"
+        destination = "local/app.conf"
         change_mode   = "signal"
         change_signal = "SIGHUP"
       }
       service {
+        name = "frontend"
         tags = ["traefik.frontend.rule=Host:comma-test.virt.ch.bbc.co.uk"]
         port = "http"
         check {
@@ -87,10 +77,6 @@ EOH
 	  interval = "10s"
 	  timeout = "2s"
         }
-      }
-      update {
-        canary = 1
-        max_parallel = 1
       }
       resources {
         cpu = 500 # 500 Mhz
@@ -101,5 +87,10 @@ EOH
         }
       }
     }
+    update {
+      canary = 1
+      max_parallel = 1
+    }
   }
 }
+
