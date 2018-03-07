@@ -87,10 +87,6 @@ EOH
         }
       }
     }
-    update {
-      canary = 1
-      max_parallel = 1
-    }
   }
 }
 

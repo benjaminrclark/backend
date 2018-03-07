@@ -44,6 +44,7 @@ EOH
     }
   }
   group "frontend-group" {
+    count = 2
     task "frontend-task" {
       driver = "docker"
       env {
@@ -86,10 +87,6 @@ EOH
 	  port "http" {}
         }
       }
-    }
-    update {
-      canary = 1
-      max_parallel = 1
     }
   }
 }

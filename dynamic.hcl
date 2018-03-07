@@ -44,6 +44,7 @@ EOH
     }
   }
   group "frontend-group" {
+    count = 2
     task "frontend-task" {
       driver = "docker"
       env {
@@ -52,7 +53,7 @@ EOH
         CONSUL_ADDR = "http://consul.service.consul:8500"
       }
       config {
-        image = "benjaminrclark/frontend:0.1"
+        image = "benjaminrclark/frontend:0.2"
         command = "/usr/bin/ruby"
         args = ["/var/opt/sinatra/src/app.rb", "-o", "0.0.0.0"]
       }
@@ -88,8 +89,8 @@ EOH
       }
     }
     update {
-      canary = 1
-      max_parallel = 1
+      canary = 2
+      max_parallel = 2
     }
   }
 }
